@@ -9,7 +9,7 @@ author: 劉依婷 B0644222
 ## 比較104年度和107年度大學畢業者的薪資資料
 
 ### 資料匯入與處理
-```{r dataload,message=FALSE,warning=FALSE}
+```{r dataload}
 library(readr)
 library(dplyr)
 Salary_104 <- read_csv("Salary_104.csv")
@@ -25,6 +25,7 @@ Salary_107$`大學-薪資`<- gsub("—|…"," ",Salary_107$`大學-薪資`)
 Salary_107$大職業別 <- gsub("_","、",Salary_107$大職業別)
 
 Salary<-inner_join(Salary_104,Salary_107,by="大職業別")
+View(Salary)  
 ```
 
 ### 107年度薪資較104年度薪資高的職業有哪些? 
@@ -37,7 +38,7 @@ Salary$大學薪資比較<-Salary$`大學-薪資.y`/Salary$`大學-薪資.x`
 Salary %>% filter(大學薪資比較>1) %>% 
   arrange(desc(大學薪資比較)) %>% 
   head(10) %>%
-  knitr::kable()
+  View()
 
 ```
 
@@ -55,8 +56,7 @@ Salary_1.05<-filter(Salary,大學薪資比較>1.05)
 strsplit(Salary_1.05$大職業別,'-') %>%
   lapply("[", 1) %>%
   unlist() %>%
-  table() %>%
-  knitr::kable()
+  table()
 ```
 
 ## 男女同工不同酬現況分析
@@ -67,20 +67,20 @@ strsplit(Salary_1.05$大職業別,'-') %>%
 ```{r male}
 Salary_104$`大學-女/男`<- gsub("—|…"," ",Salary_104$`大學-女/男`) %>% as.numeric()
 Salary_104[order(Salary_104$`大學-女/男`,decreasing=F),] %>% 
-  head(10) %>% knitr::kable()
+  head(10) %>%View()
 
 Salary_107$`大學-女/男`<- gsub("—|…"," ",Salary_107$`大學-女/男`) %>% as.numeric()
 Salary_107[order(Salary_107$`大學-女/男`,decreasing=F),] %>% 
-  head(10) %>% knitr::kable()
+  head(10) %>%View()
 
 ```
 ### 哪些行業女生薪資比男生薪資多? 
 ```{r female}
 Salary_104[order(Salary_104$`大學-女/男`,decreasing=T),] %>% 
-  head(10) %>% knitr::kable()
+  head(10) %>%View()
 
 Salary_107[order(Salary_107$`大學-女/男`,decreasing=T),] %>% 
-  head(10) %>% knitr::kable()
+  head(10) %>%View()
 ```
 
 我們可以發現，就算在結婚前，男性的薪資也比女性更高，其原因近年來已有許多討論，為何一直以來男性薪資皆比女性薪資還高呢? 其中性別歧視、家庭因素、結婚生育等原因皆備受討論。 隨著年齡增長，男性往往比女性得到更多升遷機會，差距自然擴大。也可能女性在一定的年紀後，主管會擔心女性跑去結婚生小孩而產生差別待遇，也可能是玻璃天花板導致女性升遷困難，所以差距漸大。在家庭責任上，女性被要求承擔家庭責任也可能是薪資不平等的原因之一。 
@@ -98,11 +98,12 @@ Salary_107$`研究所-薪資`<- gsub("—|…"," ",Salary_107$`研究所-薪資`
 Salary_107$`研究所-薪資`<- as.numeric(Salary_107$`研究所-薪資`)
 
 Salary_107$研究所與大學薪資比較<-Salary_107$`研究所-薪資`/Salary_107$`大學-薪資`
+View(Salary_107)
 
 Salary_107 %>% 
   arrange(desc(研究所與大學薪資比較)) %>% 
   head(10) %>%
-  knitr::kable()
+  View()
 
 ```
 
@@ -126,7 +127,7 @@ graduade<-Salary_107$`研究所-薪資`[c(79,99,100,101,128)]
 Interested_job_salary<-data.frame(job=name,
                                   college_salary=college,
                                   graduade_salary=graduade)
-knitr::kable(Interested_job_salary)
+View(Interested_job_salary)
 ```
 
 資料結果顯示的畢業薪水皆比我想像的還低許多，有些甚至接近28K，令我不經思考畢業後該如何找工作，如果薪水不如預期要跟老闆爭取還是接受現實呢?
@@ -140,13 +141,9 @@ Salary_107$`大學-薪資`<- as.numeric(Salary_107$`大學-薪資`)
 Salary_107$`研究所-薪資`<- as.numeric(Salary_107$`研究所-薪資`)
 
 graduade_vs_college<-graduade-college 
-graduade_vs_collegeO<-data.frame("大職業別"=name,
-                                 "大學畢業薪資"=college,
-                                 "研究所畢業薪資"=graduade,
-                                 "研究所薪資與大學薪資差異"=graduade_vs_college)
+graduade_vs_collegeO<-data.frame("研究所薪資與大學薪資差異"=graduade_vs_college)
 
-knitr::kable(graduade_vs_collegeO)
+View(graduade_vs_collegeO)
 ```
-
 如果是從事與出版、影音製作、傳播及資通訊服務業和專業、科學及技術服務業相關行業的話，我會選擇繼續攻讀研究所，因為薪水漲幅較高；然而從事藝術相關行業就不會就讀研究所，因為資料結果顯示，就讀研究所CP值較低。
 

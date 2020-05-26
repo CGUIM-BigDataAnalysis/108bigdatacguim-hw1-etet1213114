@@ -1,0 +1,229 @@
+108-2 大數據分析方法 作業一
+================
+劉依婷 B0644222
+
+搞不清楚各行各業的薪資差異嗎? 念研究所到底對第一份工作的薪資影響有多大? CP值高嗎? 透過分析**初任人員平均經常性薪資**-
+（107年）<https://data.gov.tw/dataset/6647>
+（104-105年）<http://ipgod.nchc.org.tw/dataset/a17000000j-020066>
+，可初步了解台灣近幾年各行各業、各學歷的起薪。
+
+## 比較104年度和107年度大學畢業者的薪資資料
+
+### 資料匯入與處理
+
+``` r
+library(readr)
+```
+
+    ## Warning: package 'readr' was built under R version 3.6.3
+
+``` r
+library(dplyr)
+```
+
+    ## Warning: package 'dplyr' was built under R version 3.6.3
+
+    ## 
+    ## Attaching package: 'dplyr'
+
+    ## The following objects are masked from 'package:stats':
+    ## 
+    ##     filter, lag
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     intersect, setdiff, setequal, union
+
+``` r
+Salary_104 <- read_csv("Salary_104.csv")
+```
+
+    ## Parsed with column specification:
+    ## cols(
+    ##   年度 = col_double(),
+    ##   大職業別 = col_character(),
+    ##   `經常性薪資-薪資` = col_double(),
+    ##   `經常性薪資-女/男` = col_character(),
+    ##   `國中及以下-薪資` = col_character(),
+    ##   `國中及以下-女/男` = col_character(),
+    ##   `高中或高職-薪資` = col_character(),
+    ##   `高中或高職-女/男` = col_character(),
+    ##   `專科-薪資` = col_character(),
+    ##   `專科-女/男` = col_character(),
+    ##   `大學-薪資` = col_character(),
+    ##   `大學-女/男` = col_character(),
+    ##   `研究所及以上-薪資` = col_character(),
+    ##   `研究所及以上-女/男` = col_character()
+    ## )
+
+``` r
+Salary_104$`大學-薪資`<- gsub("—|…"," ",Salary_104$`大學-薪資`)
+Salary_104$大職業別 <- gsub("部門","",Salary_104$大職業別)
+Salary_104$大職業別 <- gsub("醫療保健服務","醫療保健",Salary_104$大職業別)
+Salary_104$大職業別 <- gsub("教育服務業","教育業",Salary_104$大職業別)
+Salary_104$大職業別 <- gsub("營造業","營造工程",Salary_104$大職業別)
+
+
+Salary_107<- read_csv("Salary_107.csv")
+```
+
+    ## Parsed with column specification:
+    ## cols(
+    ##   年度 = col_double(),
+    ##   大職業別 = col_character(),
+    ##   `經常性薪資-薪資` = col_character(),
+    ##   `經常性薪資-女/男` = col_character(),
+    ##   `國中及以下-薪資` = col_character(),
+    ##   `國中及以下-女/男` = col_character(),
+    ##   `高中或高職-薪資` = col_character(),
+    ##   `高中或高職-女/男` = col_character(),
+    ##   `專科-薪資` = col_character(),
+    ##   `專科-女/男` = col_character(),
+    ##   `大學-薪資` = col_character(),
+    ##   `大學-女/男` = col_character(),
+    ##   `研究所-薪資` = col_character(),
+    ##   `研究所-女/男` = col_character()
+    ## )
+
+``` r
+Salary_107$`大學-薪資`<- gsub("—|…"," ",Salary_107$`大學-薪資`)
+Salary_107$大職業別 <- gsub("_","、",Salary_107$大職業別)
+
+Salary<-inner_join(Salary_104,Salary_107,by="大職業別")
+View(Salary)  
+```
+
+### 107年度薪資較104年度薪資高的職業有哪些?
+
+``` r
+Salary$`大學-薪資.x`<- as.numeric(Salary$`大學-薪資.x`)
+Salary$`大學-薪資.y`<- as.numeric(Salary$`大學-薪資.y`)
+
+Salary$大學薪資比較<-Salary$`大學-薪資.y`/Salary$`大學-薪資.x` 
+
+Salary %>% filter(大學薪資比較>1) %>% 
+  arrange(desc(大學薪資比較)) %>% 
+  head(10) %>%
+  View()
+```
+
+107年度薪資較104年度薪資高的前十名職業中，教育業就佔了3個，其因為107年度軍公教平均薪資調漲3%。
+另有研究指出近10年來服務及銷售工作人員僱用需求成長近1.4倍，增幅最大，因此可以推測企業為了雇用到合適的員工而調漲薪資，且專業、科學及技術服務業的薪資相較於其他服務業高，故可推斷其為薪資漲幅比例最高的原因
+
+### 提高超過5%的的職業有哪些?
+
+``` r
+Salary_1.05<-filter(Salary,大學薪資比較>1.05)
+```
+
+### 主要的職業種別是哪些種類呢?
+
+``` r
+strsplit(Salary_1.05$大職業別,'-') %>%
+  lapply("[", 1) %>%
+  unlist() %>%
+  table()
+```
+
+    ## .
+    ##                   工業           工業及服務業               不動產業 
+    ##                      3                      1                      5 
+    ##             支援服務業   用水供應及污染整治業           住宿及餐飲業 
+    ##                      1                      3                      4 
+    ##           批發及零售業             其他服務業                 服務業 
+    ##                      1                      1                      1 
+    ##           金融及保險業 專業、科學及技術服務業                 教育業 
+    ##                      5                      1                      4 
+    ##           運輸及倉儲業       電力及燃氣供應業                 製造業 
+    ##                      5                      1                      2 
+    ##             醫療保健業 藝術、娛樂及休閒服務業 
+    ##                      1                      5
+
+## 男女同工不同酬現況分析
+
+男女同工不同酬一直是性別平等中很重要的問題，分析資料來源為103到106年度的大學畢業薪資。
+
+### 104和107年度的大學畢業薪資資料，哪些行業男生薪資比女生薪資多?
+
+``` r
+Salary_104$`大學-女/男`<- gsub("—|…"," ",Salary_104$`大學-女/男`) %>% as.numeric()
+Salary_104[order(Salary_104$`大學-女/男`,decreasing=F),] %>% 
+  head(10) %>%View()
+
+Salary_107$`大學-女/男`<- gsub("—|…"," ",Salary_107$`大學-女/男`) %>% as.numeric()
+Salary_107[order(Salary_107$`大學-女/男`,decreasing=F),] %>% 
+  head(10) %>%View()
+```
+
+### 哪些行業女生薪資比男生薪資多?
+
+``` r
+Salary_104[order(Salary_104$`大學-女/男`,decreasing=T),] %>% 
+  head(10) %>%View()
+
+Salary_107[order(Salary_107$`大學-女/男`,decreasing=T),] %>% 
+  head(10) %>%View()
+```
+
+我們可以發現，就算在結婚前，男性的薪資也比女性更高，其原因近年來已有許多討論，為何一直以來男性薪資皆比女性薪資還高呢?
+其中性別歧視、家庭因素、結婚生育等原因皆備受討論。
+隨著年齡增長，男性往往比女性得到更多升遷機會，差距自然擴大。也可能女性在一定的年紀後，主管會擔心女性跑去結婚生小孩而產生差別待遇，也可能是玻璃天花板導致女性升遷困難，所以差距漸大。在家庭責任上，女性被要求承擔家庭責任也可能是薪資不平等的原因之一。
+
+## 研究所薪資差異
+
+以107年度的資料來看，哪個職業別念研究所最划算呢 (研究所學歷薪資與大學學歷薪資增加比例最多)?
+
+``` r
+Salary_107$`大學-薪資`<- gsub("—|…"," ",Salary_107$`大學-薪資`) %>% as.numeric()
+Salary_107$`大學-薪資`<- as.numeric(Salary_107$`大學-薪資`)
+
+Salary_107$`研究所-薪資`<- gsub("—|…"," ",Salary_107$`研究所-薪資`) %>% as.numeric()
+Salary_107$`研究所-薪資`<- as.numeric(Salary_107$`研究所-薪資`)
+
+Salary_107$研究所與大學薪資比較<-Salary_107$`研究所-薪資`/Salary_107$`大學-薪資`
+View(Salary_107)
+
+Salary_107 %>% 
+  arrange(desc(研究所與大學薪資比較)) %>% 
+  head(10) %>%
+  View()
+```
+
+從資料結果顯示可發現，研究所畢業比大學畢業薪資較高的行業大多有專業及技術能力的需求，往往有專業技術的人薪水較高，而研究所畢業與大學畢業相比，較符合期待。
+
+## 我有興趣的職業別薪資狀況分析
+
+出版、影音製作、傳播及資通訊服務業-專業人員<br/> 專業、科學及技術服務業<br/> 專業、科學及技術服務業-專業人員<br/>
+專業、科學及技術服務業-技術員及助理專業人員<br/> 藝術、娛樂及休閒服務業-專業人員<br/>
+
+### 有興趣的職業別篩選，呈現薪資
+
+``` r
+name<-Salary_107$大職業別[c(79,99,100,101,128)] 
+college<-Salary_107$`大學-薪資`[c(79,99,100,101,128)] 
+graduade<-Salary_107$`研究所-薪資`[c(79,99,100,101,128)] 
+
+Interested_job_salary<-data.frame(job=name,
+                                  college_salary=college,
+                                  graduade_salary=graduade)
+View(Interested_job_salary)
+```
+
+資料結果顯示的畢業薪水皆比我想像的還低許多，有些甚至接近28K，令我不經思考畢業後該如何找工作，如果薪水不如預期要跟老闆爭取還是接受現實呢?
+
+### 這些職業別研究所薪資與大學薪資差多少呢？
+
+``` r
+Salary_107$`大學-薪資`<- gsub("—|…"," ",Salary_107$`大學-薪資`)
+Salary_107$`研究所-薪資`<- gsub("—|…"," ",Salary_107$`研究所-薪資`)
+
+Salary_107$`大學-薪資`<- as.numeric(Salary_107$`大學-薪資`)
+Salary_107$`研究所-薪資`<- as.numeric(Salary_107$`研究所-薪資`)
+
+graduade_vs_college<-graduade-college 
+graduade_vs_collegeO<-data.frame("研究所薪資與大學薪資差異"=graduade_vs_college)
+
+View(graduade_vs_collegeO)
+```
+
+如果是從事與出版、影音製作、傳播及資通訊服務業和專業、科學及技術服務業相關行業的話，我會選擇繼續攻讀研究所，因為薪水漲幅較高；然而從事藝術相關行業就不會就讀研究所，因為資料結果顯示，就讀研究所CP值較低。
